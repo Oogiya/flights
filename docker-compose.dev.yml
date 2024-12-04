@@ -1,0 +1,39 @@
+version: "3.8"
+services:
+  frontend-dev:
+    depends_on:
+      - db
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    image: oogiya/vim-flights-frontend:latest
+    ports:
+      - 3000:3000
+    environment:
+      NEXT_PUBLIC_API_URL: "http://backend-dev:3001"
+  backend-dev:
+    depends_on:
+      - db
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    image: oogiya/vim-flights-backend:latest
+    ports:
+      - 3001:3001
+    environment:
+      PORT: 3001
+      NODE_ENV: development
+
+  db:
+    image: postgres
+    volumes:
+      - postgres_data:/home/node/app
+    environment:
+      POSTGRES_PASSWORD: root
+      POSTGRES_USER: root
+      POSTGRES_DB: flights
+    ports:
+      - 5432:5432
+
+volumes:
+  postgres_data:
