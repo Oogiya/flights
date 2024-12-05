@@ -5,7 +5,7 @@ pipeline {
         choice(name: 'ENV', choices: ['dev', 'prod'], description: 'choose env to deploy to')
     }
 
-    enviroment {
+    environment {
         DOCKER_REGISTRY = 'oogiya'
         FRONTEND_IMAGE = "${DOCKER_REGISTRY}/vim-flights-frontend:${params.ENV}"
         BACKEND_IMAGE = "${DOCKER_REGISTRY}/vim-flights-backend:${params.ENV}"
