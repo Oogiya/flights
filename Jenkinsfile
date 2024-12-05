@@ -46,19 +46,19 @@ pipeline {
         stage('Build docker images') {
             steps {
                 dir('frontend') {
-                    bat 'docker build -f Dockerfile.${params.ENV} -t $FRONTEND_IMAGE .'
+                    bat "docker build -f Dockerfile.${params.ENV} -t $FRONTEND_IMAGE ."
                 }
 
                 dir('backend') {
-                    bat 'docker build -f Dockerfile.${params.ENV} -t $BACKEND_IMAGE .'
+                    bat "docker build -f Dockerfile.${params.ENV} -t $BACKEND_IMAGE ."
                 }
             }
         }
 
         stage('Push docker images') {
             steps {
-                bat 'docker push $FRONTEND_IMAGE'
-                bat 'docker push $BACKEND_IMAGE'
+                bat "docker push $FRONTEND_IMAGE"
+                bat "docker push $BACKEND_IMAGE"
             }
         }
 

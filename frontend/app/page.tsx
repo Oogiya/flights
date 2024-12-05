@@ -278,7 +278,7 @@ export default function Home() {
             const cities = await response.json();
             setAllCities(cities);
         } catch (err) {
-            console.error("Error fetching all cities", err);
+            console.error("Error fetching all cities.", err);
         }
     } 
 
@@ -301,8 +301,6 @@ export default function Home() {
         setAllFlights();
         fetchAllCities();
         setSearchResults(flights);
-
-        //setAllCities(Array.from(new Set(flights.flatMap(flight => [flight.departure, flight.destination]))).sort());
 
     }, []);
 
