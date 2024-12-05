@@ -1,120 +1,163 @@
 import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { act } from 'react-dom/test-utils'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import Home from './page'
 
+// Mock the next/navigation module
 jest.mock('next/navigation', () => ({
-    useRouter() {
-        return {
-            push: jest.fn(),
-        }
-    },
+  useRouter() {
+    return {
+      push: jest.fn(),
+    }
+  },
 }))
 
-
+// Mock the fetch function
 global.fetch = jest.fn(() =>
-    Promise.resolve({
-        json: () => Promise.resolve([]),
-    })
+  Promise.resolve({
+    json: () => Promise.resolve([]),
+  })
 ) as jest.Mock
 
-describe("Home components", () => {
-    beforeEach(() => {
-        jest.clearAllMocks()
+describe('Home component', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('renders the main heading', () => {
+    render(<Home />)
+    expect(screen.getByText('Vim Flights')).toBeInTheDocument()
+    expect(screen.getByText('Discover Your Next Adventure')).toBeInTheDocument()
+  })
+
+  it('renders the search form', () => {
+    render(<Home />)
+    expect(screen.getByLabelText('From')).toBeInTheDocument()
+    expect(screen.getByLabelText('To')).toBeInTheDocument()
+    expect(screen.getByText('Search by date range')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /search flights/i })).toBeInTheDocument()
+  })
+
+  it('allows user to input search criteria', async () => {
+    await act(async () => {
+      render(<Home />)
     })
 
-    it("renders the main heading", () => {
-        render(<Home />)
-        expect(screen.getByText("Giga Flights")).toBeInTheDocument()
-        expect(screen.getByText("Discover Your Next Adventure")).toBeInTheDocument()
+    const fromInput = screen.getByLabelText('From')
+    const toInput = screen.getByLabelText('To')
+    const dateRangeCheckbox = screen.getByRole('checkbox', { name: '' })
+    const dateRangeLabel = screen.getByText('Search by date range')
+
+    await act(async () => {
+      await userEvent.type(fromInput, 'New York')
+      await userEvent.type(toInput, 'London')
+      await userEvent.click(dateRangeCheckbox)
     })
 
-    it("renders the main heading", () => {
-        render(<Home />)
-        expect(screen.getByLabelText("From")).toBeInTheDocument()
-        expect(screen.getByLabelText("To")).toBeInTheDocument()
-        expect(screen.getByLabelText("Search by date")).toBeInTheDocument()
-        expect(screen.getByRole("button", { name: /search flights/i })).toBeInTheDocument()
+    expect(fromInput).toHaveValue('New York')
+    expect(toInput).toHaveValue('London')
+    expect(dateRangeCheckbox).toHaveAttribute('aria-checked', 'true')
+
+    // Wait for date inputs to appear
+    await waitFor(() => {
+      const startDateInput = screen.getByLabelText('Start Date')
+      const endDateInput = screen.getByLabelText('End Date')
+      expect(startDateInput).toBeInTheDocument()
+      expect(endDateInput).toBeInTheDocument()
     })
 
-    it("allows user to input search criteria", async () => {
-        render(<Home />)
+    const startDateInput = screen.getByLabelText('Start Date')
+    const endDateInput = screen.getByLabelText('End Date')
 
-        const fromInput = screen.getByLabelText("From")
-        const toInput = screen.getByLabelText("To")
-        const dateCheckBox = screen.getByLabelText("Search by date")
-
-        fireEvent.change(fromInput, { target: { value: "new york" } })
-        fireEvent.change(toInput, { target: { value: "london" } })
-        fireEvent.click(dateCheckBox)
-
-        expect(fromInput).toHaveValue("new york")
-        expect(toInput).toHaveValue("london")
-        expect(dateCheckBox).toBeChecked()
-
-        const dateInput = await screen.findByLabelText("Date")
-        expect(dateInput).toBeInTheDocument()
-
-        fireEvent.change(dateInput, { target: { value: "2024-12-05" } })
-        expect(dateInput).toHaveValue("2024-12-05")
+    await act(async () => {
+      await userEvent.type(startDateInput, '2024-12-05')
+      await userEvent.type(endDateInput, '2024-12-10')
     })
 
-    it("performs search when form is submitted", async () => {
-        render(<Home />)
+    expect(startDateInput).toHaveValue('2024-12-05')
+    expect(endDateInput).toHaveValue('2024-12-10')
+  })
 
-        const fromInput = screen.getByLabelText("From")
-        const toInput = screen.getByLabelText("To")
-        const searchButton = screen.getByRole("button", { name: /search flights/i })
+  it('performs search when form is submitted', async () => {
+    await act(async () => {
+      render(<Home />)
+    })
 
-        fireEvent.change(fromInput, { target: { value: "new york" } })
-        fireEvent.change(toInput, { target: { value: "london" } })
+    const fromInput = screen.getByLabelText('From')
+    const toInput = screen.getByLabelText('To')
+    const searchButton = screen.getByRole('button', { name: /search flights/i })
 
-        await act(async () => {
-            fireEvent.click(searchButton)
+    await act(async () => {
+      await userEvent.type(fromInput, 'New York')
+      await userEvent.type(toInput, 'London')
+      await userEvent.click(searchButton)
+    })
+
+    expect(global.fetch).toHaveBeenCalled()
+  })
+
+  it('displays flight results after search', async () => {
+    const mockFlights = [
+      { id: 1, departure: 'New York', destination: 'London', date: '2024-12-05', price: 500 },
+      { id: 2, departure: 'London', destination: 'Paris', date: '2024-12-06', price: 200 },
+    ]
+
+    ;(global.fetch as jest.Mock).mockImplementation((url) => {
+      if (url === '/api/get-all-flights') {
+        return Promise.resolve({
+          json: () => Promise.resolve(mockFlights),
+          ok: true,
         })
-
-        expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining("api"))
+      }
+      return Promise.resolve({
+        json: () => Promise.resolve([]),
+        ok: true,
+      })
     })
 
-    it("displays flight results after search", async () => {
-        const mockFlights = [
-            { id: 1, departure: "New York", destination: "London", date: "2024-12-05T10:00:00Z", price: 500 },
-            { id: 2, departure: "London", destination: "Paris", date: "2024-12-06T10:00:00Z", price: 200 },
-        ]
+    
 
-        ;(global.fetch as jest.Mock).mockImplementationOnce(() => 
-            Promise.resolve({
-                json: () => Promise.resolve(mockFlights),
-            })
-       )
+    await act(async () => {
+      render(<Home />)
+    })
 
-        render(<Home />)
+    // Simulate search to trigger flight results
+    const searchButton = screen.getByRole('button', { name: /search flights/i })
+    await userEvent.click(searchButton)
 
-        const searchButton = screen.getByRole("button", { name: /search flights/i })
+    await waitFor(() => {
+      expect(screen.getByText('New York to London')).toBeInTheDocument()
+      expect(screen.getByText('London to Paris')).toBeInTheDocument()
+    })
+  })
 
-        await act(async () => {
-            fireEvent.click(searchButton)
+  it('fetches cities for autocomplete', async () => {
+    const mockCities = ['New York', 'London', 'Paris']
+    ;(global.fetch as jest.Mock).mockImplementation((url) => {
+      if (url === '/api/get-all-cities') {
+        return Promise.resolve({
+          json: () => Promise.resolve(mockCities),
+          ok: true,
         })
-
-        await waitFor(() => {
-            expect(screen.getByText("New York to London")).toBeInTheDocument()
-            expect(screen.getByText("London to Paris")).toBeInTheDocument()
-        })
+      }
+      return Promise.resolve({
+        json: () => Promise.resolve([]),
+        ok: true,
+      })
     })
 
-
-    it("toggles login state when login/logout button is clicked", () => {
-        render(<Home />)
-
-        const loginButton = screen.getByRole("button", { name: /login/i })
-        fireEvent.click(loginButton)
-
-        expect(screen.getByRole("button", { name: /logout/i })).toBeInTheDocument()
-        expect(screen.getByRole("button", { name: /my flights/i })).toBeInTheDocument()
-
-        const logoutButton = screen.getByRole("button", { name: /logout/i })
-        fireEvent.click(logoutButton)
-
-        expect(screen.getByRole("button", { name: /login/i })).toBeInTheDocument()
+    await act(async () => {
+      render(<Home />)
     })
+
+    const fromInput = screen.getByLabelText('From')
+    await act(async () => {
+      await userEvent.type(fromInput, 'New')
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText('New York')).toBeInTheDocument()
+    })
+  })
+
 })

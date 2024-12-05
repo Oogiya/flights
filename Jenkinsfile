@@ -19,6 +19,38 @@ pipeline {
             }
         }
 
+        stage('Install frontend dependencies') {
+            steps {
+                dir('frontend') {
+                    sh 'npm install'
+                }
+            }
+        }
+
+        stage('Run frontend tests') {
+            steps {
+                dir('frontend') {
+                    sh 'npm run test:ci'
+                }
+            }
+        }
+
+        stage('Install backend dependencies') {
+            steps {
+                dir('backend') {
+                    sh 'npm install'
+                }
+            }
+        }
+
+        stage('Run backend tests') {
+            steps {
+                dir('backend') {
+                    sh 'npm run test:ci'
+                }
+            }
+        }
+
         stage('Build docker images') {
             steps {
                 dir('frontend') {
@@ -43,6 +75,18 @@ pipeline {
                 sh "docker-compose -f $COMPOSE_FILE pull"
                 sh "docker-compose -f $COMPOSE_FILE up -d"
             }
+        }
+    }
+
+    post {
+        always {
+            echo 'pipeline completed'
+        }
+        success {
+            echo 'pipeline succeeded'
+        }
+        failure {
+            echo 'pipeline failed'
         }
     }
 }
