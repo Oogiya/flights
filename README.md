@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+## **Project Overview**
+The **Flight Booking Project** is a web-based application for managing flight bookings, built with a microservices architecture. It includes:
+- A **frontend** built with Next.js for a seamless user experience.
+- A **backend** built with Express.js for robust API services.
+- A **PostgreSQL database** for data storage.
 
-First, run the development server:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## **CI/CD**
+The CI/CD pipeline automates the process of building, testing, and deploying the application.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. **Checkout Code**:
+   - Pulls the latest code from the Git repository.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+2. **Build Docker Images**:
+   - Frontend and backend Docker images are built using respective `Dockerfile.prod`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. **Run Automated Tests**:
+   - Frontend tests use Jest.
+   - [TODO] Backend tests use Mocha. 
 
-## Learn More
+4. **Push Docker Images**:
+   - Docker images are tagged with the environment (e.g., `dev`, `prod`) and pushed to a Docker registry.
 
-To learn more about Next.js, take a look at the following resources:
+5. **Deploy**:
+   - The application is deployed to either development or production using `docker-compose`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## **Docker and Environment Configuration**
+### **Frontend Configuration**
+- `Dockerfile.dev`:
+  - Supports hot reloading.
+- `Dockerfile.prod`:
+  - Optimized for serving static files with Next.js.
 
-## Deploy on Vercel
+### **Backend Configuration**
+- `Dockerfile.dev`:
+  - Includes debugging tools.
+- `Dockerfile.prod`:
+  - Stripped-down production image.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### **Database Configuration**
+- Uses the official `postgres` image.
+- Data persistence is ensured via a Docker volume (`postgres_data`).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### **[TODO] Environment Variables**
+- `NEXT_PUBLIC_API_URL`: Frontend connection to backend API.
+- `DATABASE_URL`: Backend connection to the PostgreSQL database.
+
+---
+
+## **Deployment Steps**
+### **Development**
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-repo/flight-booking.git
+   cd flight-booking
+   ```
+2. Start the development environment:
+   ```bash
+   docker-compose -f docker-compose.dev.yml up -d
+   ```
+3. Access the application:
+   - Frontend: `http://localhost:3000`
+   - Backend: `http://localhost:3001`
+
+### **Production**
+1. Build and push Docker images:
+   ```bash
+   docker build -f frontend/Dockerfile.prod -t your-docker-registry/vim-flights-frontend:prod frontend/
+   docker build -f backend/Dockerfile.prod -t your-docker-registry/vim-flights-backend:prod backend/
+   docker push your-docker-registry/vim-flights-frontend:prod
+   docker push your-docker-registry/vim-flights-backend:prod
+   ```
+2. Deploy the application:
+   ```bash
+   docker-compose -f docker-compose.prod.yml up -d
+   ```
