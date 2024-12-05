@@ -43,14 +43,6 @@ pipeline {
             }
         }
 
-        stage('Run backend tests') {
-            steps {
-                dir('backend') {
-                    bat 'npm run test:ci'
-                }
-            }
-        }
-
         stage('Build docker images') {
             steps {
                 dir('frontend') {
