@@ -22,7 +22,7 @@ pipeline {
         stage('Install frontend dependencies') {
             steps {
                 dir('frontend') {
-                    sh 'npm install'
+                    bat 'npm install'
                 }
             }
         }
@@ -30,7 +30,7 @@ pipeline {
         stage('Run frontend tests') {
             steps {
                 dir('frontend') {
-                    sh 'npm run test:ci'
+                    bat 'npm run test:ci'
                 }
             }
         }
@@ -38,7 +38,7 @@ pipeline {
         stage('Install backend dependencies') {
             steps {
                 dir('backend') {
-                    sh 'npm install'
+                    bat 'npm install'
                 }
             }
         }
@@ -46,7 +46,7 @@ pipeline {
         stage('Run backend tests') {
             steps {
                 dir('backend') {
-                    sh 'npm run test:ci'
+                    bat 'npm run test:ci'
                 }
             }
         }
@@ -54,26 +54,26 @@ pipeline {
         stage('Build docker images') {
             steps {
                 dir('frontend') {
-                    sh 'docker build -f Dockerfile.${params.ENV} -t $FRONTEND_IMAGE .'
+                    bat 'docker build -f Dockerfile.${params.ENV} -t $FRONTEND_IMAGE .'
                 }
 
                 dir('backend') {
-                    sh 'docker build -f Dockerfile.${params.ENV} -t $BACKEND_IMAGE .'
+                    bat 'docker build -f Dockerfile.${params.ENV} -t $BACKEND_IMAGE .'
                 }
             }
         }
 
         stage('Push docker images') {
             steps {
-                sh 'docker push $FRONTEND_IMAGE'
-                sh 'docker push $BACKEND_IMAGE'
+                bat 'docker push $FRONTEND_IMAGE'
+                bat 'docker push $BACKEND_IMAGE'
             }
         }
 
         stage('deploy') {
             steps {
-                sh "docker-compose -f $COMPOSE_FILE pull"
-                sh "docker-compose -f $COMPOSE_FILE up -d"
+                bat "docker-compose -f $COMPOSE_FILE pull"
+                bat "docker-compose -f $COMPOSE_FILE up -d"
             }
         }
     }
